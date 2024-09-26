@@ -284,7 +284,7 @@ app.get("/auth/clear", async (c: Context<{ Bindings: Bindings }>) => {
  * ------- short url api ---------
  */
 
-// app.use("/api/*", authMiddleware);
+app.use("/api/*", authMiddleware);
 
 app.get("/api/ping", (c) => {
   return c.json({ success: true, message: "pong" });
