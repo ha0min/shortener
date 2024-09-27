@@ -67,3 +67,36 @@ export async function releaseLock(c: any, url: string, lockId: string) {
     console.error("Error releasing lock:", error);
   }
 }
+
+export async function fetchAnalyticsData(c: any): Promise<{ totalClicks: number} | null> {
+  const query = `
+    SELECT 
+      count() as totalClicks
+    FROM TEST
+  `;
+
+  const API = `https://api.cloudflare.com/client/v4/accounts/${c.env.ACCOUNT_ID}/analytics_engine/sql`;
+
+  try {
+    const analyticsEngineResponse = await fetch(API, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${c.env.API_TOKEN}`,
+      },
+      body: query,
+    });
+
+    if (!analyticsEngineResponse.ok) {
+      console.error(
+        `Analytics engine error: ${analyticsEngineResponse.status} ${analyticsEngineResponse.statusText}`
+      );
+      return null;
+    }
+
+    const data: any = await analyticsEngineResponse.json();
+    return data.data[0];
+  } catch (error) {
+    console.error("Error querying analytics data:", error);
+    return null;
+  }
+}

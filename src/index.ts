@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { nanoid } from "nanoid";
 import {
   acquireLock,
+  fetchAnalyticsData,
   generateShortCode,
   getGitHubUsername,
   logAnalytics,
@@ -19,6 +20,7 @@ import {
   AnalyticsResponseType,
   AnalyticsEngineResponseType,
   AnalyticsRequestBody,
+  AnalyticsOverviewResponse,
 } from "./type";
 
 /**
@@ -502,7 +504,7 @@ app.get("/api/dashboard/all", async (c) => {
   return c.json(result);
 });
 
-app.get("/api/analytics/:urlId", async (c) => {
+app.get("/api/analytics/url/:urlId", async (c) => {
   const urlId = c.req.param("urlId");
   const startDateTimestamp = c.req.query("startDate");
   const endDateTimestamp = c.req.query("endDate");
@@ -612,6 +614,49 @@ app.get("/api/analytics/:urlId", async (c) => {
       } as AnalyticsResponseType,
       500
     );
+  }
+});
+
+app.get("/api/analytics/overview", async (c: Context<{ Bindings: Bindings }>) => {
+  try {
+
+    const { keys } = await c.env.URL_SHORTENER.list({ prefix: "link:" });
+
+    if (!keys.length) {
+      return c.json({
+        success: true,
+        overview: {
+          totalClicks: 0,
+          totalLinks: 0,
+          avgClicksPerLink: 0
+        },
+        recentLinks: []
+      });
+    }
+
+    const analyticsData = await fetchAnalyticsData(c);
+    
+    if (!analyticsData) {
+      return c.json({ success: false, message: "Failed to fetch analytics data" }, 500);
+    }
+
+    const { totalClicks } = analyticsData;
+    const totalLinks = keys.length;
+    const avgClicksPerLink = totalLinks ? totalClicks / totalLinks : 0;
+
+    const response: AnalyticsOverviewResponse = {
+      success: true,
+      data: {
+        totalClicks,
+        totalLinks,
+        avgClicksPerLink: parseFloat(avgClicksPerLink.toFixed(1)),
+      },
+    };
+
+    return c.json(response);
+  } catch (error) {
+    console.error("Error fetching analytics overview:", error);
+    return c.json({ success: false, message: "Failed to fetch analytics data" } as AnalyticsOverviewResponse, 500);
   }
 });
 

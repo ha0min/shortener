@@ -75,3 +75,15 @@ export interface AnalyticsRequestBody {
   startDateTimestamp: number;
   endDateTimestamp: number;
 }
+
+export interface AnalyticsOverviewData {
+  totalClicks: number;
+  totalLinks: number;
+  avgClicksPerLink: number;
+}
+
+export interface AnalyticsOverviewResponse {
+  success: boolean;
+  data?: AnalyticsOverviewData;
+  message?: string;
+}
