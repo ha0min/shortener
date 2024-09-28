@@ -222,15 +222,7 @@ app.get("/auth/validate", async (c: Context<{ Bindings: Bindings }>) => {
 });
 
 app.post("/auth/logout", async (c: Context<{ Bindings: Bindings }>) => {
-  // Get the request body
-  const body = await c.req.json();
-
-  // Check if the body contains the expected data
-  if (!body || typeof body !== "object") {
-    return c.json({ success: false, message: "Invalid request body" });
-  }
-
-  const sessionId = body.sessionId;
+  const sessionId = getCookie(c, "url_shortener_gh_session");
 
   if (!sessionId) {
     return c.json({ success: false, message: "Session not found" });
@@ -254,7 +246,6 @@ app.post("/auth/logout", async (c: Context<{ Bindings: Bindings }>) => {
     return c.json({ success: true, message: "Logged out successfully" });
   }
 });
-
 app.get("/auth/clear", async (c: Context<{ Bindings: Bindings }>) => {
   try {
     // List all keys in the KV namespace
